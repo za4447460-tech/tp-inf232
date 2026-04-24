@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BudgetApp</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --accent: #1D9E75; --accent-dark: #0F6E56; --accent-light: #E1F5EE;
+  --bg: #f5f4f0; --card: #ffffff; --text: #1a1a1a;
+  --muted: #6b6b6b; --border: #e0deda; --danger: #D85A30; --warning: #BA7517;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); }
+
+/* ---- PAGES ---- */
+.page { display: none; min-height: 100vh; }
+.page.active { display: block; }
+
+/* ---- NAV ---- */
+nav {
+  background: var(--card); border-bottom: 1px solid var(--border);
+  padding: 1rem 2rem; display: flex; align-items: center;
+  justify-content: space-between; position: sticky; top: 0; z-index: 10;
+}
+.logo { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 700; color: var(--accent); cursor: pointer; }
+.nav-links { display: flex; gap: 0.5rem; }
+.nav-links button {
+  padding: 0.5rem 1rem; border-radius: 8px; border: none; background: transparent;
+  font-size: 0.88rem; font-weight: 500; color: var(--muted); cursor: pointer;
+  font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+}
+.nav-links button:hover, .nav-links button.active { background: var(--accent-light); color: var(--accent); }
+.user-badge {
+  background: var(--accent-light); color: var(--accent);
+  padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.85rem; font-weight: 500;
+  cursor: pointer; border: none; font-family: 'DM Sans', sans-serif;
+}
+
+/* ---- AUTH ---- */
+.auth-wrap {
+  min-height: 100vh; display: flex; align-items: center;
+  justify-content: center; padding: 2rem; background: var(--bg);
+}
+.auth-box {
+  background: var(--card); border-radius: 24px; padding: 3rem;
+  width: 100%; max-width: 480px; border: 1px solid var(--border);
+}
+.auth-logo { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 700; color: var(--accent); margin-bottom: 0.4rem; }
+.auth-sub { font-size: 0.9rem; color: var(--muted); margin-bottom: 2rem; }
+.tabs { display: flex; border: 1px solid var(--border); border-radius: 12px; padding: 4px; margin-bottom: 2rem; }
+.tab { flex: 1; padding: 0.6rem; text-align: center; font-size: 0.9rem; font-weight: 500; border-radius: 9px; cursor: pointer; color: var(--muted); border: none; background: transparent; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
+.tab.active { background: var(--accent); color: white; }
+.form-group { margin-bottom: 1.1rem; }
+label { display: block; font-size: 0.83rem; font-weight: 500; margin-bottom: 0.4rem; }
+input, select {
+  width: 100%; padding: 0.72rem 1rem; border: 1px solid var(--border); border-radius: 10px;
+  font-size: 0.9rem; font-family: 'DM Sans', sans-serif; color: var(--text);
+  background: var(--bg); outline: none; transition: border-color 0.2s;
+}
+input:focus, select:focus { border-color: var(--accent); }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.btn {
+  width: 100%; padding: 0.85rem; background: var(--accent); color: white;
+  border: none; border-radius: 10px; font-size: 0.95rem; font-weight: 500;
+  font-family: 'DM Sans', sans-serif; cursor: pointer; transition: background 0.2s; margin-top: 0.3rem;
+}
+.btn:hover { background: var(--accent-dark); }
+.msg { padding: 0.7rem 1rem; border-radius: 10px; font-size: 0.85rem; margin-top: 0.8rem; display: none; }
+.msg.success { background: #EAF3DE; color: #3B6D11; display: block; }
+.msg.error { background: #FAECE7; color: var(--danger); display: block; }
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ---- MAIN LAYOUT ---- */
+main { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+.page-title { font-family: 'Syne', sans-serif; font-size: 1.6rem; font-weight: 700; margin-bottom: 0.3rem; }
+.page-sub { font-size: 0.9rem; color: var(--muted); margin-bottom: 2rem; }
+.card { background: var(--card); border-radius: 16px; border: 1px solid var(--border); padding: 1.5rem; }
+.card-title { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 600; margin-bottom: 0.3rem; }
+.card-sub { font-size: 0.82rem; color: var(--muted); margin-bottom: 1.2rem; }
+
+/* ---- STATS CARDS ---- */
+.cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+.stat-card { position: relative; }
+.stat-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; margin-bottom: 1rem; }
+.ic-green { background: var(--accent-light); }
+.ic-orange { background: #FAEEDA; }
+.ic-red { background: #FAECE7; }
+.ic-blue { background: #E6F1FB; }
+.stat-label { font-size: 0.82rem; color: var(--muted); margin-bottom: 0.3rem; }
+.stat-value { font-family: 'Syne', sans-serif; font-size: 1.7rem; font-weight: 700; }
+.sv-green { color: var(--accent); } .sv-orange { color: var(--warning); }
+.sv-red { color: var(--danger); } .sv-blue { color: #185FA5; }
+
+/* ---- CHARTS ---- */
+.charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+.chart-wrap { position: relative; width: 100%; }
+.legend { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 1rem; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+.legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+/* ---- TABLE ---- */
+.table-card { background: var(--card); border-radius: 16px; border: 1px solid var(--border); padding: 1.5rem; margin-bottom: 2rem; }
+table { width: 100%; border-collapse: collapse; }
+th { font-size: 0.8rem; color: var(--muted); font-weight: 500; text-align: left; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--border); }
+td { font-size: 0.88rem; padding: 0.75rem 0.8rem; border-bottom: 1px solid var(--border); }
+tr:last-child td { border-bottom: none; }
+.badge { padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 500; }
+.b-food { background: #EAF3DE; color: #3B6D11; }
+.b-transport { background: #E6F1FB; color: #185FA5; }
+.b-loisir { background: #FBEAF0; color: #993556; }
+.b-autre { background: #F1EFE8; color: #5F5E5A; }
+.b-logement { background: #FAEEDA; color: #633806; }
+.b-sante { background: #EAF3DE; color: #27500A; }
+.del-btn { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 1rem; padding: 4px 8px; border-radius: 6px; }
+.del-btn:hover { background: #FAECE7; }
+
+/* ---- DEPENSES PAGE ---- */
+.dep-grid { display: grid; grid-template-columns: 1fr 1.6fr; gap: 1.5rem; }
+.categories { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1.2rem; }
+.cat-btn {
+  padding: 0.6rem 0.5rem; border: 1px solid var(--border); border-radius: 10px;
+  background: var(--bg); font-size: 0.83rem; cursor: pointer; text-align: center;
+  transition: all 0.2s; font-family: 'DM Sans', sans-serif; color: var(--text); border: 1px solid var(--border);
+}
+.cat-btn.selected { border-color: var(--accent); background: var(--accent-light); color: var(--accent); }
+.dep-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
+.dep-item:last-child { border-bottom: none; }
+
+/* ---- DEFIS PAGE ---- */
+.defi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+.progress-wrap { margin: 1.2rem 0; }
+.progress-bar { height: 12px; background: #f0ede8; border-radius: 20px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 20px; transition: width 1s ease; }
+.status-card { border-radius: 14px; padding: 1.2rem; margin-top: 1rem; text-align: center; }
+.sc-success { background: #EAF3DE; border: 1px solid #C0DD97; }
+.sc-fail { background: #FAECE7; border: 1px solid #F5C4B3; }
+.mini-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+.mini-stat { background: var(--bg); border-radius: 12px; padding: 1rem; text-align: center; }
+.mini-label { font-size: 0.78rem; color: var(--muted); margin-bottom: 0.3rem; }
+.mini-val { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 700; }
+
+/* ---- CONSEILS ---- */
+.conseils-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+.conseil-card { background: var(--card); border-radius: 14px; border: 1px solid var(--border); padding: 1.2rem 1.4rem; display: flex; gap: 1rem; align-items: flex-start; }
+.conseil-icon { font-size: 1.5rem; flex-shrink: 0; }
+.conseil-titre { font-size: 0.88rem; font-weight: 600; margin-bottom: 0.2rem; }
+.conseil-texte { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
+.cc-alerte { border-left: 3px solid var(--danger); }
+.cc-info { border-left: 3px solid var(--accent); }
+.cc-tip { border-left: 3px solid var(--warning); }
+
+/* ---- SECTION TITLE ---- */
+.section-title { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 600; margin-bottom: 1rem; }
+
+@media (max-width: 768px) {
+  .charts-grid, .dep-grid, .defi-grid { grid-template-columns: 1fr; }
+  nav { padding: 1rem; flex-wrap: wrap; gap: 0.5rem; }
+  .nav-links button { padding: 0.4rem 0.6rem; font-size: 0.8rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ==================== PAGE AUTH ==================== -->
+<div class="page active" id="page-auth">
+  <div class="auth-wrap">
+    <div class="auth-box">
+      <div class="auth-logo">💰 BudgetApp</div>
+      <p class="auth-sub">Gérez votre budget étudiant facilement</p>
+      <div class="tabs">
+        <button class="tab active" onclick="switchAuthTab('connexion')">Connexion</button>
+        <button class="tab" onclick="switchAuthTab('inscription')">Inscription</button>
+      </div>
+
+      <!-- Connexion -->
+      <div class="panel active" id="panel-connexion">
+        <div class="form-group"><label>Email</label><input type="email" id="login-email" placeholder="votre@email.com"></div>
+        <div class="form-group"><label>Mot de passe</label><input type="password" id="login-mdp" placeholder="••••••••"></div>
+        <button class="btn" onclick="seConnecter()">Se connecter</button>
+        <div class="msg" id="msg-login"></div>
+      </div>
+
+      <!-- Inscription -->
+      <div class="panel" id="panel-inscription">
+        <div class="row">
+          <div class="form-group"><label>Nom</label><input type="text" id="reg-nom" placeholder="Dupont"></div>
+          <div class="form-group"><label>Prénom</label><input type="text" id="reg-prenom" placeholder="Marie"></div>
+        </div>
+        <div class="row">
+          <div class="form-group"><label>Filière</label><input type="text" id="reg-filiere" placeholder="Informatique"></div>
+          <div class="form-group"><label>Niveau</label>
+            <select id="reg-niveau">
+              <option value="">Choisir...</option>
+              <option>Licence 1</option><option>Licence 2</option><option>Licence 3</option>
+              <option>Master 1</option><option>Master 2</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group"><label>Email</label><input type="email" id="reg-email" placeholder="votre@email.com"></div>
+        <div class="form-group"><label>Mot de passe</label><input type="password" id="reg-mdp" placeholder="••••••••"></div>
+        <button class="btn" onclick="sInscrire()">Créer mon compte</button>
+        <div class="msg" id="msg-register"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== NAV (pages internes) ==================== -->
+<div id="app-nav" style="display:none">
+  <nav>
+    <div class="logo" onclick="goTo('dashboard')">💰 BudgetApp</div>
+    <div class="nav-links">
+      <button id="nav-dashboard" onclick="goTo('dashboard')">Tableau de bord</button>
+      <button id="nav-depenses" onclick="goTo('depenses')">Dépenses</button>
+      <button id="nav-defis" onclick="goTo('defis')">Défis</button>
+    </div>
+    <button class="user-badge" id="user-badge" onclick="seDeconnecter()">Déconnexion</button>
+  </nav>
+</div>
+
+<!-- ==================== PAGE DASHBOARD ==================== -->
+<div class="page" id="page-dashboard">
+  <main>
+    <div class="page-title">Bonjour 👋 <span id="dash-prenom"></span></div>
+    <p class="page-sub">Résumé de votre budget</p>
+
+    <div class="cards-grid">
+      <div class="card stat-card">
+        <div class="stat-icon ic-green">💰</div>
+        <div class="stat-label">Budget total</div>
+        <div class="stat-value sv-green" id="stat-budget">—</div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-icon ic-orange">📊</div>
+        <div class="stat-label">Total dépensé</div>
+        <div class="stat-value sv-orange" id="stat-total">—</div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-icon ic-red">📉</div>
+        <div class="stat-label">Reste disponible</div>
+        <div class="stat-value sv-red" id="stat-reste">—</div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-icon ic-blue">🎯</div>
+        <div class="stat-label">Statut défi</div>
+        <div class="stat-value sv-blue" id="stat-defi">—</div>
+      </div>
+    </div>
+
+    <!-- Graphiques catégories + camembert -->
+    <div class="charts-grid" style="margin-bottom:2rem">
+      <div class="card">
+        <div class="card-title">Dépenses par catégorie</div>
+        <div class="card-sub">Cette semaine</div>
+        <div class="legend" id="legend-bar"></div>
+        <div class="chart-wrap" style="height:240px">
+          <canvas id="barChart" role="img" aria-label="Dépenses par catégorie">Dépenses par catégorie.</canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Répartition</div>
+        <div class="card-sub">Par type</div>
+        <div class="legend" id="legend-pie"></div>
+        <div class="chart-wrap" style="height:200px">
+          <canvas id="pieChart" role="img" aria-label="Répartition des dépenses">Répartition.</canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Courbe évolution -->
+    <div class="card" style="margin-bottom:2rem">
+      <div class="card-title">Évolution des dépenses par semaine</div>
+      <div class="card-sub">Courbe des dernières semaines — ligne verte = budget</div>
+      <div class="chart-wrap" style="height:240px">
+        <canvas id="lineChart" role="img" aria-label="Évolution hebdomadaire des dépenses">Évolution.</canvas>
+      </div>
+    </div>
+
+    <!-- Conseils -->
+    <div class="section-title">💡 Conseils personnalisés pour économiser</div>
+    <div class="conseils-grid" id="conseils-grid"></div>
+
+    <!-- Dernières dépenses -->
+    <div class="table-card">
+      <div class="card-title" style="margin-bottom:0.3rem">Dernières dépenses</div>
+      <div class="card-sub">Historique récent</div>
+      <table>
+        <thead><tr><th>Catégorie</th><th>Montant</th><th>Date</th></tr></thead>
+        <tbody id="dash-table"><tr><td colspan="3" style="text-align:center;color:var(--muted);padding:2rem">Chargement...</td></tr></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<!-- ==================== PAGE DEPENSES ==================== -->
+<div class="page" id="page-depenses">
+  <main>
+    <div class="page-title">Mes dépenses</div>
+    <p class="page-sub">Enregistrez et suivez vos dépenses</p>
+    <div class="dep-grid">
+      <div class="card">
+        <div class="card-title">Ajouter une dépense</div>
+        <div class="card-sub">Renseignez les détails</div>
+        <div class="form-group">
+          <label>Catégorie</label>
+          <div class="categories">
+            <button class="cat-btn" onclick="selectCat(this,'Alimentation')">🍔 Alimentation</button>
+            <button class="cat-btn" onclick="selectCat(this,'Transport')">🚌 Transport</button>
+            <button class="cat-btn" onclick="selectCat(this,'Loisirs')">🎬 Loisirs</button>
+            <button class="cat-btn" onclick="selectCat(this,'Logement')">🏠 Logement</button>
+            <button class="cat-btn" onclick="selectCat(this,'Santé')">💊 Santé</button>
+            <button class="cat-btn" onclick="selectCat(this,'Autre')">📦 Autre</button>
+          </div>
+        </div>
+        <div class="form-group"><label>Montant (XAF)</label><input type="number" id="dep-montant" placeholder="ex: 2500"></div>
+        <button class="btn" onclick="ajouterDepense()">+ Enregistrer</button>
+        <div class="msg" id="msg-dep"></div>
+        <div style="margin-top:1.5rem;padding:1rem;background:var(--accent-light);border-radius:12px">
+          <p style="font-size:0.83rem;color:var(--accent-dark);font-weight:500;margin-bottom:0.3rem">💡 Astuce</p>
+          <p style="font-size:0.82rem;color:var(--accent-dark)">Enregistrez chaque dépense immédiatement pour ne rien oublier !</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Répartition cette semaine</div>
+        <div class="card-sub">Visualisez vos habitudes</div>
+        <div class="legend" id="dep-legend"></div>
+        <div class="chart-wrap" style="height:200px"><canvas id="depChart" role="img" aria-label="Répartition dépenses">Dépenses.</canvas></div>
+        <div id="dep-liste" style="margin-top:1.2rem"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ==================== PAGE DEFIS ==================== -->
+<div class="page" id="page-defis">
+  <main>
+    <div class="page-title">Mes défis budgétaires 🎯</div>
+    <p class="page-sub">Fixez un budget et relevez le défi de ne pas le dépasser</p>
+    <div class="defi-grid">
+      <div class="card">
+        <div class="card-title">Créer un défi</div>
+        <div class="card-sub">Définissez votre budget</div>
+        <div class="form-group"><label>Budget maximum (XAF)</label><input type="number" id="defi-budget" placeholder="ex: 50000"></div>
+        <button class="btn" onclick="creerDefi()">🎯 Lancer le défi</button>
+        <div class="msg" id="msg-defi"></div>
+        <div style="margin-top:1.5rem;padding:1rem;background:var(--accent-light);border-radius:12px">
+          <p style="font-size:0.83rem;color:var(--accent-dark);font-weight:500;margin-bottom:0.3rem">💡 Conseil</p>
+          <p style="font-size:0.82rem;color:var(--accent-dark)">Un budget réaliste est entre 30 000 et 80 000 XAF par semaine.</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Mon défi actuel</div>
+        <div class="card-sub">Suivi de progression</div>
+        <div id="defi-result"><p style="text-align:center;color:var(--muted);padding:2rem">Chargement...</p></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Budget vs Dépenses</div>
+      <div class="card-sub">Comparaison visuelle</div>
+      <div class="chart-wrap" style="height:240px"><canvas id="defiChart" role="img" aria-label="Budget vs dépenses">Budget vs dépenses.</canvas></div>
+    </div>
+  </main>
+</div>
+
+<!-- ==================== JAVASCRIPT ==================== -->
+<script>
+const API = 'http://localhost:3000';
+let userId = null, userNom = '', userPrenom = '';
+let barChart, pieChart, lineChart, depChart, defiChart;
+let selectedCat = '';
+
+const COLORS = {
+  'Alimentation':'#1D9E75','Transport':'#378ADD','Loisirs':'#D4537E',
+  'Logement':'#BA7517','Santé':'#639922','Autre':'#888780'
+};
+const BADGES = {
+  'Alimentation':'b-food','Transport':'b-transport','Loisirs':'b-loisir',
+  'Logement':'b-logement','Santé':'b-sante','Autre':'b-autre'
+};
+
+// ---- NAVIGATION ----
+function goTo(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelectorAll('.nav-links button').forEach(b => b.classList.remove('active'));
+  document.getElementById('nav-' + page).classList.add('active');
+  if (page === 'dashboard') loadDashboard();
+  if (page === 'depenses') loadDepenses();
+  if (page === 'defis') loadDefi();
+}
+
+function showApp() {
+  document.getElementById('page-auth').classList.remove('active');
+  document.getElementById('app-nav').style.display = 'block';
+  document.getElementById('user-badge').textContent = userPrenom || 'Mon compte';
+  document.getElementById('dash-prenom').textContent = userPrenom;
+  goTo('dashboard');
+}
+
+function seDeconnecter() {
+  localStorage.clear();
+  userId = null;
+  document.getElementById('app-nav').style.display = 'none';
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-auth').classList.add('active');
+}
+
+// ---- AUTH ----
+function switchAuthTab(tab) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', (i===0 && tab==='connexion') || (i===1 && tab==='inscription'));
+  });
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+}
+
+function showMsg(id, text, type) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = 'msg ' + type;
+  setTimeout(() => el.className = 'msg', 4000);
+}
+
+async function sInscrire() {
+  const body = {
+    nom: document.getElementById('reg-nom').value,
+    prenom: document.getElementById('reg-prenom').value,
+    filiere: document.getElementById('reg-filiere').value,
+    niveau: document.getElementById('reg-niveau').value,
+    email: document.getElementById('reg-email').value,
+    mot_de_passe: document.getElementById('reg-mdp').value
+  };
+  if (!body.nom || !body.email || !body.mot_de_passe) return showMsg('msg-register','Remplissez tous les champs.','error');
+  try {
+    const res = await fetch(API+'/utilisateur', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+    const data = await res.json();
+    if (data.success) {
+      showMsg('msg-register','Compte créé ! Connectez-vous.','success');
+      switchAuthTab('connexion');
+    } else {
+      showMsg('msg-register', data.message || 'Erreur.', 'error');
+    }
+  } catch { showMsg('msg-register','Serveur introuvable.','error'); }
+}
+
+async function seConnecter() {
+  const email = document.getElementById('login-email').value;
+  const mdp = document.getElementById('login-mdp').value;
+  if (!email || !mdp) return showMsg('msg-login','Remplissez tous les champs.','error');
+  try {
+    const res = await fetch(API+'/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email, mot_de_passe:mdp}) });
+    const data = await res.json();
+    if (data.success) {
+      userId = data.user.id;
+      userNom = data.user.nom;
+      userPrenom = data.user.prenom;
+      localStorage.setItem('user_id', userId);
+      localStorage.setItem('user_nom', userNom);
+      localStorage.setItem('user_prenom', userPrenom);
+      showApp();
+    } else {
+      showMsg('msg-login', data.message, 'error');
+    }
+  } catch { showMsg('msg-login','Serveur introuvable.','error'); }
+}
+
+// ---- DASHBOARD ----
+async function loadDashboard() {
+  let depenses = [], totalVal = 0, budget = 50000, defiStatut = '—';
+  try {
+    const [depRes, totalRes, defiRes] = await Promise.all([
+      fetch(`${API}/depenses/${userId}`),
+      fetch(`${API}/total/${userId}`),
+      fetch(`${API}/defi/${userId}`)
+    ]);
+    depenses = await depRes.json();
+    const total = await totalRes.json();
+    const defi = await defiRes.json();
+    totalVal = parseFloat(total.total) || 0;
+    if (defi && defi.budget) { budget = parseFloat(defi.budget); defiStatut = defi.statut; }
+  } catch {}
+
+  const reste = budget - totalVal;
+  document.getElementById('stat-budget').textContent = budget.toLocaleString('fr-FR') + ' XAF';
+  document.getElementById('stat-total').textContent = totalVal.toLocaleString('fr-FR') + ' XAF';
+  document.getElementById('stat-reste').textContent = reste.toLocaleString('fr-FR') + ' XAF';
+  document.getElementById('stat-defi').textContent = defiStatut;
+
+  buildBarPie(depenses);
+  buildLine(depenses, budget);
+  buildConseils(depenses, totalVal, budget);
+  buildTable(depenses);
+}
+
+function buildBarPie(depenses) {
+  const grouped = {};
+  depenses.forEach(d => { grouped[d.categorie] = (grouped[d.categorie]||0) + parseFloat(d.montant); });
+  const labels = Object.keys(grouped);
+  const values = Object.values(grouped);
+  const colors = labels.map(l => COLORS[l]||'#888780');
+  const total = values.reduce((a,b)=>a+b,0);
+
+  document.getElementById('legend-bar').innerHTML = labels.map((l,i)=>
+    `<span class="legend-item"><span class="legend-dot" style="background:${colors[i]}"></span>${l} ${values[i].toLocaleString()} XAF</span>`
+  ).join('');
+
+  if (barChart) barChart.destroy();
+  barChart = new Chart(document.getElementById('barChart'), {
+    type:'bar',
+    data:{ labels, datasets:[{ data:values, backgroundColor:colors, borderRadius:6, borderSkipped:false }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      scales:{ x:{grid:{display:false}}, y:{grid:{color:'#f0ede8'}, ticks:{callback:v=>v.toLocaleString()+' F'}} } }
+  });
+
+  document.getElementById('legend-pie').innerHTML = labels.map((l,i)=>
+    `<span class="legend-item"><span class="legend-dot" style="background:${colors[i]}"></span>${l} ${total?Math.round(values[i]/total*100):0}%</span>`
+  ).join('');
+
+  if (pieChart) pieChart.destroy();
+  pieChart = new Chart(document.getElementById('pieChart'), {
+    type:'doughnut',
+    data:{ labels, datasets:[{ data:values, backgroundColor:colors, borderWidth:0 }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'65%', plugins:{legend:{display:false}} }
+  });
+}
+
+function buildLine(depenses, budget) {
+  const semaines = {};
+  depenses.forEach(d => {
+    const date = new Date(d.date_ajout || Date.now());
+    const debut = new Date(date);
+    debut.setDate(debut.getDate() - debut.getDay());
+    const key = debut.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});
+    semaines[key] = (semaines[key]||0) + parseFloat(d.montant);
+  });
+  const keys = Object.keys(semaines).sort();
+  const labels = keys.length >= 2 ? keys : ['S1','S2','S3','S4','S5','S6'];
+  const values = keys.length >= 2 ? keys.map(k=>semaines[k]) : [12000,18000,15000,22000,17000,18500];
+
+  if (lineChart) lineChart.destroy();
+  lineChart = new Chart(document.getElementById('lineChart'), {
+    type:'line',
+    data:{ labels, datasets:[
+      { label:'Dépenses', data:values, borderColor:'#D85A30', backgroundColor:'rgba(216,90,48,0.08)', borderWidth:2.5, pointBackgroundColor:'#D85A30', pointRadius:5, fill:true, tension:0.4 },
+      { label:'Budget', data:labels.map(()=>budget), borderColor:'#1D9E75', borderWidth:2, borderDash:[6,4], pointRadius:0, fill:false }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      scales:{ x:{grid:{display:false}}, y:{grid:{color:'#f0ede8'}, ticks:{callback:v=>v.toLocaleString()+' F'}} } }
+  });
+}
+
+function buildConseils(depenses, totalVal, budget) {
+  const grouped = {};
+  depenses.forEach(d => { grouped[d.categorie] = (grouped[d.categorie]||0) + parseFloat(d.montant); });
+  const pct = budget > 0 ? totalVal/budget : 0;
+  const conseils = [];
+
+  if (pct >= 1) conseils.push({type:'cc-alerte',icon:'🚨',titre:'Budget dépassé !',texte:'Évitez toute dépense non essentielle jusqu\'à la prochaine semaine.'});
+  else if (pct >= 0.8) conseils.push({type:'cc-alerte',icon:'⚠️',titre:'Budget presque atteint',texte:`Il ne vous reste que ${Math.round((1-pct)*100)}% de votre budget. Soyez prudent.`});
+  else conseils.push({type:'cc-info',icon:'✅',titre:'Budget sous contrôle',texte:`Vous avez utilisé ${Math.round(pct*100)}% de votre budget. Continuez ainsi !`});
+
+  if ((grouped['Alimentation']||0) > 0.4*budget) conseils.push({type:'cc-tip',icon:'🍽️',titre:'Alimentation élevée',texte:'Cuisinez vous-même plutôt que de manger au restaurant pour économiser.'});
+  else conseils.push({type:'cc-info',icon:'🛒',titre:'Optimisez vos courses',texte:'Faites vos courses avec une liste préparée pour éviter les achats impulsifs.'});
+
+  if ((grouped['Transport']||0) > 0.2*budget) conseils.push({type:'cc-tip',icon:'🚌',titre:'Transport coûteux',texte:'Envisagez le covoiturage ou les abonnements transport en commun.'});
+  else conseils.push({type:'cc-info',icon:'☕',titre:'Petits achats, grand impact',texte:'500 XAF/jour = 15 000 XAF/mois. Limitez les petites dépenses répétées.'});
+
+  conseils.push({type:'cc-info',icon:'📊',titre:'Règle 50/30/20',texte:'50% besoins essentiels, 30% envies, 20% épargne. Une règle simple et efficace.'});
+
+  document.getElementById('conseils-grid').innerHTML = conseils.slice(0,4).map(c=>
+    `<div class="conseil-card ${c.type}"><div class="conseil-icon">${c.icon}</div><div><div class="conseil-titre">${c.titre}</div><div class="conseil-texte">${c.texte}</div></div></div>`
+  ).join('');
+}
+
+function buildTable(depenses) {
+  const tbody = document.getElementById('dash-table');
+  if (!depenses.length) { tbody.innerHTML='<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:1.5rem">Aucune dépense</td></tr>'; return; }
+  tbody.innerHTML = depenses.slice(0,10).map(d=>`
+    <tr>
+      <td><span class="badge ${BADGES[d.categorie]||'b-autre'}">${d.categorie}</span></td>
+      <td><strong>${parseFloat(d.montant).toLocaleString('fr-FR')} XAF</strong></td>
+      <td style="color:var(--muted)">${d.date_ajout ? new Date(d.date_ajout).toLocaleDateString('fr-FR') : 'Aujourd\'hui'}</td>
+    </tr>`).join('');
+}
+
+// ---- DEPENSES ----
+function selectCat(btn, cat) {
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedCat = cat;
+}
+
+async function ajouterDepense() {
+  const montant = document.getElementById('dep-montant').value;
+  if (!selectedCat) return showMsg('msg-dep','Choisissez une catégorie.','error');
+  if (!montant || montant <= 0) return showMsg('msg-dep','Montant invalide.','error');
+  try {
+    const res = await fetch(API+'/depense', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({utilisateur_id:userId, categorie:selectedCat, montant}) });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('dep-montant').value = '';
+      showMsg('msg-dep','Dépense enregistrée !','success');
+      loadDepenses();
+    } else { showMsg('msg-dep', data.message, 'error'); }
+  } catch { showMsg('msg-dep','Erreur serveur.','error'); }
+}
+
+async function supprimerDepense(id) {
+  try {
+    await fetch(`${API}/depense/${id}`, { method:'DELETE' });
+    loadDepenses();
+  } catch {}
+}
+
+async function loadDepenses() {
+  let depenses = [];
+  try {
+    const res = await fetch(`${API}/depenses/${userId}`);
+    depenses = await res.json();
+  } catch {}
+
+  const grouped = {};
+  depenses.forEach(d => { grouped[d.categorie] = (grouped[d.categorie]||0) + parseFloat(d.montant); });
+  const labels = Object.keys(grouped);
+  const values = Object.values(grouped);
+  const colors = labels.map(l => COLORS[l]||'#888780');
+  const total = values.reduce((a,b)=>a+b,0);
+
+  document.getElementById('dep-legend').innerHTML = labels.map((l,i)=>
+    `<span class="legend-item"><span class="legend-dot" style="background:${colors[i]}"></span>${l} — ${total?Math.round(values[i]/total*100):0}%</span>`
+  ).join('');
+
+  if (depChart) depChart.destroy();
+  depChart = new Chart(document.getElementById('depChart'), {
+    type:'bar',
+    data:{ labels, datasets:[{ data:values, backgroundColor:colors, borderRadius:6, borderSkipped:false }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      scales:{ x:{grid:{display:false}}, y:{grid:{color:'#f0ede8'}, ticks:{callback:v=>v.toLocaleString()+' F'}} } }
+  });
+
+  const liste = document.getElementById('dep-liste');
+  if (!depenses.length) { liste.innerHTML='<p style="text-align:center;color:var(--muted);padding:1rem">Aucune dépense enregistrée</p>'; return; }
+  liste.innerHTML = depenses.slice(0,8).map(d=>`
+    <div class="dep-item">
+      <div>
+        <span class="badge ${BADGES[d.categorie]||'b-autre'}">${d.categorie}</span>
+        <span style="font-size:0.82rem;color:var(--muted);margin-left:8px">${d.date_ajout?new Date(d.date_ajout).toLocaleDateString('fr-FR'):''}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <strong style="color:var(--danger)">${parseFloat(d.montant).toLocaleString('fr-FR')} XAF</strong>
+        <button class="del-btn" onclick="supprimerDepense(${d.id})">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+// ---- DEFIS ----
+async function creerDefi() {
+  const budget = document.getElementById('defi-budget').value;
+  if (!budget || budget <= 0) return showMsg('msg-defi','Budget invalide.','error');
+  try {
+    const res = await fetch(API+'/defi', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({utilisateur_id:userId, budget}) });
+    const data = await res.json();
+    if (data.success) { showMsg('msg-defi','Défi lancé ! Bonne chance 🎯','success'); loadDefi(); }
+    else showMsg('msg-defi', data.message, 'error');
+  } catch { showMsg('msg-defi','Erreur serveur.','error'); }
+}
+
+async function loadDefi() {
+  let defi = null;
+  try {
+    const res = await fetch(`${API}/defi/${userId}`);
+    defi = await res.json();
+    if (!defi || !defi.budget) defi = null;
+  } catch {}
+
+  if (!defi) {
+    document.getElementById('defi-result').innerHTML = '<p style="text-align:center;color:var(--muted);padding:2rem">Aucun défi en cours. Créez-en un !</p>';
+    return;
+  }
+
+  const budget = parseFloat(defi.budget);
+  const depense = parseFloat(defi.total_depense) || 0;
+  const pct = Math.min(Math.round(depense/budget*100), 100);
+  const success = defi.statut === 'réussi';
+  const reste = budget - depense;
+
+  document.getElementById('defi-result').innerHTML = `
+    <div class="mini-stats">
+      <div class="mini-stat"><div class="mini-label">Budget</div><div class="mini-val" style="color:var(--accent)">${budget.toLocaleString('fr-FR')} XAF</div></div>
+      <div class="mini-stat"><div class="mini-label">Dépensé</div><div class="mini-val" style="color:var(--danger)">${depense.toLocaleString('fr-FR')} XAF</div></div>
+    </div>
+    <div class="progress-wrap">
+      <div style="display:flex;justify-content:space-between;font-size:0.83rem;margin-bottom:0.5rem">
+        <span style="color:var(--muted)">Utilisation</span><span style="font-weight:500">${pct}%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${success?'var(--accent)':'var(--danger)'}"></div></div>
+    </div>
+    <div class="status-card ${success?'sc-success':'sc-fail'}">
+      <div style="font-size:2rem;margin-bottom:0.5rem">${success?'🏆':'⚠️'}</div>
+      <div style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;color:${success?'#3B6D11':'var(--danger)'}">
+        ${success?'Défi réussi !':'Défi échoué'}
+      </div>
+      <div style="font-size:0.85rem;color:var(--muted);margin-top:0.3rem">
+        ${success?'Il vous reste '+reste.toLocaleString('fr-FR')+' XAF':'Vous avez dépassé de '+Math.abs(reste).toLocaleString('fr-FR')+' XAF'}
+      </div>
+    </div>`;
+
+  if (defiChart) defiChart.destroy();
+  defiChart = new Chart(document.getElementById('defiChart'), {
+    type:'bar',
+    data:{ labels:['Budget alloué','Total dépensé','Reste disponible'],
+      datasets:[{ data:[budget, depense, Math.max(reste,0)], backgroundColor:['#1D9E75','#D85A30','#378ADD'], borderRadius:8, borderSkipped:false }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      scales:{ x:{grid:{display:false}}, y:{grid:{color:'#f0ede8'}, ticks:{callback:v=>v.toLocaleString()+' F'}} } }
+  });
+}
+
+// ---- INIT ----
+window.onload = () => {
+  const savedId = localStorage.getItem('user_id');
+  if (savedId) {
+    userId = savedId;
+    userNom = localStorage.getItem('user_nom') || '';
+    userPrenom = localStorage.getItem('user_prenom') || '';
+    showApp();
+  }
+};
+</script>
+</body>
+</html>
